@@ -30,9 +30,10 @@ Confirmed on both shadow-cljs 2.x and 3.x:
 | @lexical/rich-text | 0.49.0 | 0.49.0 |
 | React | 18 | 18 |
 
-## Reproduce
+## Reproduce (shadow/)
 
 ```bash
+cd shadow
 npm install
 npx shadow-cljs release app
 python3 -m http.server 7291 --directory public
@@ -41,7 +42,7 @@ python3 -m http.server 7291 --directory public
 
 ## Workaround
 
-In `shadow-cljs.edn`, change `:output-feature-set` from `:es-next` to `:es-next-in`:
+In `shadow/shadow-cljs.edn`, change `:output-feature-set` from `:es-next` to `:es-next-in`:
 
 ```clojure
 :compiler-options {:output-feature-set :es-next-in}

@@ -1,4 +1,6 @@
 node_modules/
 .shadow-cljs/
-public/js/compiled/
-vanilla/out/
+shadow/node_modules/
+shadow/.shadow-cljs/
+shadow/public/js/compiled/
+clojure-build/out/
