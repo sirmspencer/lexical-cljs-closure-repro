@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>shadow-cljs + Lexical + Closure Compiler repro</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; }
+    [contenteditable] { min-height: 80px; border: 1px solid #ccc; padding: 8px; border-radius: 4px; outline: none; }
+  </style>
+</head>
+<body>
+  <h2>shadow-cljs + Lexical + Closure Compiler repro</h2>
+  <p>Type some text in the editor below, then press <kbd>Backspace</kbd>.<br>
+     Open DevTools console — you should see a <code>ReferenceError: Must call super constructor in derived class</code>.</p>
+  <div id="app"></div>
+  <script src="js/compiled/app.js"></script>
+</body>
+</html>
