@@ -14,7 +14,7 @@
   "devDependencies": {
     "esbuild": "latest",
     "google-closure-compiler": "latest",
-    "shadow-cljs": "^2.28.3"
+    "shadow-cljs": "3.4.12"
   },
   "allowScripts": {
     "esbuild@0.28.2": true
