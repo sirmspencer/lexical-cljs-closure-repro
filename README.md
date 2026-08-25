@@ -50,6 +50,23 @@ hierarchy instead of restructuring it in a way that violates the JavaScript spec
 Setting `:language-out :no-transpile` alone does **not** fix the issue — the damage happens
 in an optimizer pass before the output syntax stage.
 
+## Variant: vanilla JS (no ClojureScript)
+
+To test whether the bug is in Closure Compiler independently of shadow-cljs:
+
+```bash
+npm install
+npm run build:vanilla
+python3 -m http.server 7292 --directory vanilla
+# open http://localhost:7292, type text, press Backspace, check console
+```
+
+Pipeline: `esbuild` (bundles Lexical ESM → single IIFE, class syntax preserved) →
+`google-closure-compiler` ADVANCED (npm package, currently `20260819`).
+
+Note: this variant uses the latest Closure Compiler npm release, which may differ from the
+version bundled with shadow-cljs 2.28.3 (`v20240317`).
+
 ## Root cause (hypothesis)
 
 Closure Compiler's ADVANCED optimization mode rewrites Lexical's class inheritance chain
