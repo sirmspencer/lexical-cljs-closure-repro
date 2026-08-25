@@ -10,7 +10,9 @@
 </head>
 <body>
   <h2>Vanilla JS + Closure Compiler repro</h2>
+  <p>Running at <code id="url"></code></p>
   <p>Type text, press <kbd>Backspace</kbd>, check console.</p>
+  <script>document.getElementById('url').textContent = window.location.href;</script>
   <div id="editor" contenteditable="true"></div>
   <script src="out/bundle.js"></script>
 </body>
