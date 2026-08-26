@@ -52,9 +52,12 @@ class HeadingNode extends lexical.ElementNode {
 |---|---|---|
 | v20240317 (shadow-cljs 2.28.3) | no | broken |
 | v20250407 (shadow-cljs 3.4.12) | no | broken |
-| v20250526 | yes | untested, expected fixed |
-| v20260407 | yes | verified working |
-| v20260824 | yes | verified working |
+| v20260407 | yes | verified working* |
+| v20260824 | yes | verified working* |
+
+*Verified via `shadow-local/` with the shadow-cljs code changes from
+[thheller/shadow-cljs#1275](https://github.com/thheller/shadow-cljs/pull/1275);
+stock shadow-cljs 3.4.12 cannot load these Closure versions.
 
 Lexical 0.49.0, @lexical/rich-text 0.49.0, React 18 throughout.
 
@@ -73,8 +76,11 @@ bash shadow/build.sh
 
 ### `shadow-local/` (port 7294)
 
-Builds against a local shadow-cljs checkout via `:local/root`, for experimenting with
-shadow source and Closure versions. Requires a sibling clone:
+Builds against a local shadow-cljs checkout via `:local/root`. This is the harness
+used to validate the fix: point the sibling clone at any shadow-cljs checkout, for
+example the branch from
+[thheller/shadow-cljs#1275](https://github.com/thheller/shadow-cljs/pull/1275).
+Requires a sibling clone:
 
 ```bash
 git clone https://github.com/thheller/shadow-cljs ../shadow-cljs
@@ -87,8 +93,9 @@ bash shadow-local/build.sh
 No shadow-cljs at all. A small Clojure program calls the Closure Compiler Java API with
 the same options shadow's npm pass (`convert-sources-simple*`) uses: SIMPLE optimizations,
 `setLanguageIn(UNSUPPORTED)`, `legacySetOutputFeatureSet(ES_NEXT)`. Reproduces the same
-runtime error, proving the bug needs no shadow-specific code. Uses one Java pass copied
-verbatim from shadow's source (`NodeEnvInlinePass`).
+runtime error, proving the bug needs no shadow-specific code. Bumping the closure-compiler
+version in its `deps.edn` to v20260824 was confirmed to produce correct output with no
+other changes. Uses one Java pass copied verbatim from shadow's source (`NodeEnvInlinePass`).
 
 ```bash
 bash clojure-build/build.sh
