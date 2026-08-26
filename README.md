@@ -3,8 +3,7 @@
 *Description generated with LLM assistance*
 
 Minimal reproduction of a runtime error that occurs when shadow-cljs compiles a project
-using [Lexical](https://lexical.dev) with `:output-feature-set :es-next` and Closure
-Compiler ADVANCED optimizations.
+using [Lexical](https://lexical.dev) with `:output-feature-set :es-next`.
 
 ## The bug
 
@@ -17,51 +16,95 @@ accessing 'this' or returning from derived constructor
 
 The error does not occur in dev mode (`shadow-cljs watch`), which bypasses Closure Compiler.
 
-## Environment
+## Root cause
 
-Confirmed on both shadow-cljs 2.x and 3.x:
+Closure Compiler releases v20220601 through v20250407 exclude public class fields from
+the `ES_NEXT` feature set. The feature was demoted from `ES_NEXT` to `UNSTABLE` in
+v20220601 because transpilation support was incomplete
+([google/closure-compiler#2731](https://github.com/google/closure-compiler/issues/2731)).
+It was promoted back in v20250526, the release immediately after shadow-cljs's current pin.
 
-| Dependency | 2.x | 3.x |
+With the old pin, `:output-feature-set :es-next` maps to
+`legacySetOutputFeatureSet(FeatureSet/ES_NEXT)`, and since that feature set lacks class
+fields, Closure transpiles them away. Lexical's node classes use public class fields
+extensively. Some classes get downleveled to function-style constructors (with `$jscomp`
+helpers injected) while related classes in the same hierarchy remain native ES classes.
+Mixing the two violates the spec and throws at runtime.
+
+Broken output (Closure v20250407), field moved into a transpiled constructor:
+
+```js
+constructor(w="h1",G){super(G);this.__tag=w}
+```
+
+Fixed output (Closure v20260824), field emitted natively:
+
+```js
+class HeadingNode extends lexical.ElementNode {
+  __tag;
+  ...
+}
+```
+
+## Version matrix
+
+| Closure Compiler | ES_NEXT includes class fields | Lexical editor |
 |---|---|---|
-| shadow-cljs | 2.28.3 | 3.4.12 |
-| Closure Compiler | v20240317 | v20250407 |
-| lexical | 0.49.0 | 0.49.0 |
-| @lexical/react | 0.49.0 | 0.49.0 |
-| @lexical/rich-text | 0.49.0 | 0.49.0 |
-| React | 18 | 18 |
+| v20240317 (shadow-cljs 2.28.3) | no | broken |
+| v20250407 (shadow-cljs 3.4.12) | no | broken |
+| v20250526 | yes | untested, expected fixed |
+| v20260407 | yes | verified working |
+| v20260824 | yes | verified working |
 
-## Reproduce (shadow/)
+Lexical 0.49.0, @lexical/rich-text 0.49.0, React 18 throughout.
+
+## Repro variants
+
+Three independent build paths, each with a one-command build script that ends by serving
+the page. Open the printed localhost URL, type text, press Backspace, check the console.
+
+### `shadow/` (port 7293)
+
+Released shadow-cljs 3.4.12 as-is. Demonstrates the bug.
 
 ```bash
-cd shadow
-npm install
-npx shadow-cljs release app
-python3 -m http.server 7291 --directory public
-# open http://localhost:7291, type text, press Backspace, check console
+bash shadow/build.sh
+```
+
+### `shadow-local/` (port 7294)
+
+Builds against a local shadow-cljs checkout via `:local/root`, for experimenting with
+shadow source and Closure versions. Requires a sibling clone:
+
+```bash
+git clone https://github.com/thheller/shadow-cljs ../shadow-cljs
+cd ../shadow-cljs && lein javac && cd -
+bash shadow-local/build.sh
+```
+
+### `clojure-build/` (port 7292)
+
+No shadow-cljs at all. A small Clojure program calls the Closure Compiler Java API with
+the same options shadow's npm pass (`convert-sources-simple*`) uses: SIMPLE optimizations,
+`setLanguageIn(UNSUPPORTED)`, `legacySetOutputFeatureSet(ES_NEXT)`. Reproduces the same
+runtime error, proving the bug needs no shadow-specific code. Uses one Java pass copied
+verbatim from shadow's source (`NodeEnvInlinePass`).
+
+```bash
+bash clojure-build/build.sh
 ```
 
 ## Workaround
 
-In `shadow/shadow-cljs.edn`, change `:output-feature-set` from `:es-next` to `:es-next-in`:
+In `shadow-cljs.edn`, change `:output-feature-set` from `:es-next` to `:es-next-in`:
 
 ```clojure
 :compiler-options {:output-feature-set :es-next-in}
 ```
 
-`:es-next-in` maps to `legacySetOutputFeatureSet(FeatureSet/ES_UNSTABLE)` in the Closure
-Compiler Java API. This causes the optimizer to preserve Lexical's class hierarchy instead
-of restructuring it in a way that violates the JavaScript spec.
+`:es-next-in` maps to `legacySetOutputFeatureSet(FeatureSet/ES_UNSTABLE)`, and
+`ES_UNSTABLE` includes class fields even in the affected Closure versions, so they are
+emitted natively.
 
-Setting `:language-out :no-transpile` alone does **not** fix the issue — the damage happens
-in an optimizer pass before the output syntax stage.
-
-## Root cause
-
-shadow-cljs calls `legacySetOutputFeatureSet(FeatureSet/ES_NEXT)` when
-`:output-feature-set :es-next` is set. This enables optimizer passes that rewrite Lexical's
-class inheritance chain in a way that causes a derived class constructor to access `this`
-before `super()` completes. The error surfaces in `RangeSelection.deleteCharacter`, which
-creates new node instances during the update cycle.
-
-Changing to `:es-next-in` calls `legacySetOutputFeatureSet(FeatureSet/ES_UNSTABLE)` instead,
-which disables the responsible pass.
+Setting `:language-out :no-transpile` alone does **not** fix the issue; the class-field
+transpilation happens before the output syntax stage.

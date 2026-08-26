@@ -7,3 +7,7 @@ clojure-build/node_modules/
 clojure-build/out/
 clojure-build/classes/
 clojure-build/.cpcache/
+shadow-local/node_modules/
+shadow-local/.shadow-cljs/
+shadow-local/public/js/compiled/
+shadow-local/.cpcache/
