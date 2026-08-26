@@ -1,0 +1,5 @@
+{:deps {org.clojure/clojure                   {:mvn/version "1.12.4"}
+        com.google.javascript/closure-compiler {:mvn/version "v20250407"}}
+ :paths ["src"]
+ :aliases {:build {:extra-paths ["classes"]
+                   :main-opts   ["-m" "clojure-build.core"]}}}

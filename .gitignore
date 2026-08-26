@@ -3,4 +3,7 @@ node_modules/
 shadow/node_modules/
 shadow/.shadow-cljs/
 shadow/public/js/compiled/
+clojure-build/node_modules/
 clojure-build/out/
+clojure-build/classes/
+clojure-build/.cpcache/

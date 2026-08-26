@@ -1,0 +1,14 @@
+{
+  "name": "lexical-clojure-build-repro",
+  "private": true,
+  "scripts": {
+    "bundle": "esbuild main.js --bundle --format=iife --define:process.env.NODE_ENV='\"production\"' --define:global=window --minify-syntax --outfile=out/intermediate.js"
+  },
+  "dependencies": {
+    "lexical": "0.49.0",
+    "@lexical/rich-text": "0.49.0"
+  },
+  "devDependencies": {
+    "esbuild": "latest"
+  }
+}
